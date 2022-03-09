@@ -1,0 +1,15 @@
+﻿@model ReporteTransaccionesDetalladas
+@{
+    ViewData["Title"] = "Movimientos Cuenta";
+
+}
+
+
+<!--este h1 es un título que toma un ViewBag que se crea en la ACCION Detalle, que toma el nombre de la cuenta -->
+<h1 class="mb-3 align-content-center">Movimientos @ViewBag.Cuenta</h1>
+
+<partial name="_ReporteTransaccionesDetalladas" model="Model" />
+
+
+
+

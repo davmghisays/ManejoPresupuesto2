@@ -1,0 +1,18 @@
+﻿@model DateTime
+
+
+<!--este controlador configura el mes y el año de las transacciones que se van a ver para la cuenta. Cada vez que
+    se acciona uno de los botones, se envía a la ACCION Detalle del CONTROLADOR Detalle, pero por motivos que no 
+    entiendo, mantiene el ID, pero envía a través del ViewBag un GET al CONTROLADOR y a la ACCION Detalle con orden
+    de mes anterior, o de mes posterior. Cada vez que esto sucede, se carga la página con el mes, el año y con las
+    transacciones correspondientes.
+-->
+<h4 class="container mb-3">
+    <a asp-route-mes="@ViewBag.mesAnterior" asp-route-año ="@ViewBag.añoAnterior" class = "btn btn-secondary">
+        <i class="bi-chevron-left"></i>
+    </a>
+    @Model.ToString("MMM")-@Model.Year
+    <a asp-route-mes="@ViewBag.mesPosterior" asp-route-año ="@ViewBag.añoPosterior" class = "btn btn-secondary">
+        <i class="bi-chevron-right"></i>
+    </a>
+</h4>

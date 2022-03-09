@@ -1,0 +1,29 @@
+﻿@model ResumenMontosViewModel
+
+
+<!--este contenedor tiene los valores generales de balance ditribuidos, donde aparecen depositos, retiros y totales  -->
+
+<div class="contenedor-totales mb-3">
+
+    <div>
+        <strong>Depósitos</strong>
+    </div>
+    <div class="activo">
+        @Model.Ingresos.ToString("C")
+    </div>
+
+    <div>
+        <strong>Retiros</strong>
+    </div>
+    <div class="pasivo">
+        @Model.Gastos.ToString("C")
+    </div>
+
+    <div>
+        <strong>Total</strong>
+    </div>
+    <div>
+        @Model.Total.ToString("C")
+    </div>
+
+</div>

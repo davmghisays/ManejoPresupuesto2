@@ -1,0 +1,139 @@
+﻿
+@{
+    ViewData["Title"] = "Vista de Calendario";
+}
+
+<partial name="_Submenu" model = "SubMenuTransacciones.Calendario" />
+
+<div id="calendar"></div>
+
+<!--Creación de un MODAL que va a mostrar un resumen más detallado de transacciones por día
+    Se debe tener especial atención en las clases que se usan, ya que son la manera de bootstrap
+    de entender cómo debe formatear el modal. Además, los id son los identificadores que va a usar
+    el script de javascript para saber qué poblar y en donde.
+-->
+
+<div class="modal fade" id ="modalTransacciones" tabindex="-1">
+    <div class = "modal-dialog modal-dialog-centered">
+        <div class="model-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Transacciones del día</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th id="modalTablaFecha" colspan="2"></th>
+                            <th id="modalTablaIngresos" class="activo"></th>
+                            <th id="modalTablaGastos" class="pasivo"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="modalTablaCuerpo">
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-bg-secondary btn" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts {
+
+    <script src="~/lib/fullcalendar/main.min.js" ></script>
+
+    <script>
+
+      document.addEventListener('DOMContentLoaded', function() {
+        var calendarEl = document.getElementById('calendar');
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+          initialView: 'dayGridMonth',
+          // aqui se establece la ruta que debe seguir par allegar a la accion
+          events: '/transacciones/ObtenerTransaccionesCalendario',
+          dateClick: async function(info){
+              await buscarTransaccionesPorFecha(info.dateStr);
+          }
+        });
+        calendar.render();
+      });
+
+      /*La función buscarTransaccionesPorFecha recibe una fecha en particular (la cual es la fecha a la
+          que uno le da click en el FullCalendar). Esta hace un fetch con un URL GET a la direccion
+          /transacciones/ObtenerTransaccionesPorFecha?fecha=(fecha)*/
+
+      async function buscarTransaccionesPorFecha(fecha){
+          const response = await fetch(`/transacciones/ObtenerTransaccionesPorFecha?fecha=${fecha}`,{
+              method: 'GET',
+              headers: {
+                  'Content-Type': 'application/json'
+              }
+          });
+
+          /* la variable json va a recoger la respuesta que se obtuvo en la variable response en forma de JSON
+          tambien.*/ 
+          const json = await response.json();
+
+          let ingresos = 0;
+          let gastos = 0;
+          const tipoOperacionesIngresos = 1;
+
+          /* El formateador se encarga de darle al número al que se le aplique la función, un formato en dolares */
+
+          const formateador = new Intl.NumberFormat ('en-US', {
+              style: 'currency',
+              currency: 'USD'
+          });
+
+          /* Ahora se procede a mapear el json que se recibió en la variable filas, de modo que, a cada elemento de enumerable
+           json, que se le va a llamar transacción, entonces se hacen varias operaciones*/
+
+          const filas = json.map(transaccion => {
+
+              /*a cada operación de cada transacción, si es ingreso, entonce se suma a la variable ingresos. Lo mismo pasa
+              con los gastos. Todo se va sumando para generar un total*/
+
+              if (transaccion.tipoOperacionId === tipoOperacionesIngresos){
+                  ingresos += transaccion.monto;
+              } else{
+                  gastos += transaccion.monto;
+              }
+
+              /*Como se está mapeando, entonces por cada transacción se va a retornar esta porción de código de html, en la que se genera
+               una fila que tiene en la primera celda la categoria de la transacción, la cuenta, y luego una elección, en la que establece
+               si el monto va a ir rojo o azul, de acuerdo con las clases de CSS activo o pasivo.*/
+
+              return `<tr>
+                    <td>${transaccion.categoria}</td>
+                    <td>${transaccion.cuenta}</td>
+                    <td align="right" colspan="2" class=${transaccion.tipoOperacionId === tipoOperacionesIngresos ? 'activo' : 'pasivo'}>
+                    ${formateador.format(transaccion.monto)}
+                    </td>
+                    </tr>`;
+          });
+
+          /*Aqui se establece a qué id de etiqueta del modal corresponde cada dato que se sacó en javascript. En este caso, el id
+          modalTablaCuerpo va a colocar las filas.
+          
+          Luego, el id modalTablaIngresos va a formatear los ingresos y los va a mostrar alla donde existen, y el modalTablaGastos a mostrar
+          la variable gastos. y el id modalTablaFecha va a mostrar la variable fecha.*/
+
+          $("#modalTablaCuerpo").html(filas);
+          $("#modalTablaIngresos").html(formateador.format(ingresos));
+          $("#modalTablaGastos").html(formateador.format(gastos));
+          $("#modalTablaFecha").html(fecha);
+
+          /*Se crea entonces un modal de bootstrap que va a identicarse con el div que tiene como id modalTransacciones. */
+          const modalTransacciones = new bootstrap.Modal(document.getElementById('modalTransacciones'));
+
+          /*Concluye entonces mostrando el modal. */
+          modalTransacciones.show();
+      }
+
+    </script>
+
+}
+
+

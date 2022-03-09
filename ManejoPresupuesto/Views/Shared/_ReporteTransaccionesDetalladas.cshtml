@@ -1,0 +1,91 @@
+﻿<!-- Esta vista se encarga de mostrar en una tabla en pantalla todas las transacciones clasificadas por mes
+     inicialmente y tambien por fecha en particular del mes. En principio se configura
+-->
+
+@model ReporteTransaccionesDetalladas
+
+@{
+    var resumenMontos = new ResumenMontosViewModel()
+    {
+        Ingresos = Model.BalanceDepositos,
+        Gastos = Model.BalanceRetiros,
+        Total = Model.Total
+    };
+}
+
+<!--este partial configura el mes y el año de las transacciones que se van a ver para la cuenta. Cada vez que
+    se acciona uno de los botones, se envía a la ACCION Detalle del CONTROLADOR Detalle, pero por motivos que no 
+    entiendo, mantiene el ID, pero envía a través del ViewBag un GET al CONTROLADOR y a la ACCION Detalle con orden
+    de mes anterior, o de mes posterior. Cada vez que esto sucede, se carga la página con el mes, el año y con las
+    transacciones correspondientes.
+-->
+
+<partial name ="_NavegarPorMes" model = "@Model.FechaInicio" />
+
+<!--este partial tiene los valores generales de balance ditribuidos, donde aparecen depositos, retiros y totales  -->
+
+<partial name="_ResumenMontos" model="@resumenMontos"/>
+
+<!-- ahora, si no hay transacciones en el iEnumerable de Transacciones agrupadas, la pantalla
+    va a mostrar que no hay nada "No hay datos para mostrar."
+-->
+
+@if (Model.TransaccionesAgrupadas.Count()==0){
+    <h5>No hay datos para mostrar</h5>
+}
+else{
+
+    /*En caso de que si hayan se va a crear una tabla que va a tener:
+    
+        1. Una fila titulo en la que va a aparecer la fecha de transacción con el día dentro de
+        un badge, luego la suma de gastos e ingresos para esa fecha.
+        */
+
+    <table class="table">
+
+        <tbody>
+        @foreach(var transaccionAgrupada in Model.TransaccionesAgrupadas)
+        {
+            <tr style="background-color: lightblue; font-size: 26px">
+                <td colspan="3">
+                    @transaccionAgrupada.FechaTransaccion.Day
+                    <span class="badge bg-secondary">
+                        @transaccionAgrupada.FechaTransaccion.ToString("ddd")
+                    </span>
+                </td>
+                <td class="activo">@transaccionAgrupada.BalanceDepositos.ToString("C")</td>
+                <td class="pasivo">@transaccionAgrupada.BalanceRetiros.ToString("C")</td>
+            </tr>
+
+            /*Para cada día entonces se muestran todas las transacciones, donde se crea una fila por cada una.
+            Se crea un botón para editar cada transacción, que va a la ACCION EDITAR en el CONTROLADOR TRANSACCIONES
+            pasando el id del registro.
+            
+            Finalmente, como se quiere que la transacción aparezca al lado de los ingresos o al lado de los gastos, pues
+            juntas se colocan en las etiquetas, pero la que no es se cambia como nula, y la que si es, aparece, haciendo
+            que aparezca solo en un lado.*/
+
+                @foreach (var transaccion in transaccionAgrupada.Transacciones)
+                {
+                    <tr style="vertical-align: middle">
+                        <td>
+                            <a asp-controller="transacciones" asp-action="Editar" asp-route-id="@transaccion.Id" asp-route-urlRetorno = "@ViewBag.urlRetorno">
+                                <i class="bi-pencil"></i>
+                            </a>
+                        </td>
+                        <td>@transaccion.Categoria</td>
+                        <td>@transaccion.Cuenta</td>
+                        <td class="activo">@(transaccion.TipoOperacionId == TipoOperacion.Ingreso ? transaccion.Monto.ToString("C") : null)</td>
+                        <td class="pasivo">@(transaccion.TipoOperacionId == TipoOperacion.Gasto ? transaccion.Monto.ToString("C") : null)</td>
+
+                    </tr>
+                }
+
+        }
+
+        </tbody>
+
+
+
+    </table>
+}

@@ -1,0 +1,33 @@
+﻿@model TipoCuenta
+
+
+@{
+    ViewData["Title"] = "Editar Tipo de Cuenta";
+}
+
+<h1>Editar Tipo de Cuenta: @Model.Nombre</h1>
+
+<div class="text-danger" asp-validation-summary="ModelOnly"></div>  
+
+<form asp-controller="TiposCuentas" asp-action="Editar" class="container">
+
+
+    <!--Este dato escondido type="hidden" va acá porque voy a enviar el 
+        formulario con todo y el Id que recibí al final-->
+    <input type="hidden" asp-for="Id"/>
+    <div class="mb-3">
+    
+        <label asp-for="Nombre" class="form-label">Nombre</label>
+        <input type="text" asp-for="Nombre" class="form-control" />
+        <span asp-validation-for="Nombre" class="text-danger"></span>
+    
+    </div>
+
+    <button type="submit" class="btn-primary btn">Enviar</button>
+    <a class="btn btn-secondary" asp-action="Index">Cancelar</a>
+
+</form>
+
+@section Scripts{
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,187 @@
+﻿@model IEnumerable<IndiceCuentasViewModel>
+@{
+    ViewData["Title"] = "Cuentas";
+
+    
+    <!-- La función FormatearBalance se va a encargar de transformar el número que reciba
+    en un string con formato de moneda (Currency) => C como parámetro del ToString()-->
+
+    string FormatearBalance(decimal balance)
+    {
+        return Math.Abs(balance).ToString("C");
+    }
+
+    <!-- ObtenerClaseBalance va a elegir si la clase que va a tomar una etiqueta va a
+    ser activo o pasivo. Estas clases se encuentran definidas en el css del Index.
+    La sintaxis es una manera abreviada de decir:
+
+        If(balance >= 0){
+            return activo;
+        }else{
+            return pasivo;}
+   -->
+
+    string ObtenerClaseBalance(decimal balance)
+    {
+        return balance >= 0 ? "activo" : "pasivo";
+    }
+}
+
+
+<h1>Cuentas</h1>
+
+<a asp-action="Crear" class="btn btn-primary mb3">Crear Nueva Cuenta</a>
+
+
+
+<div class="contenedor-totales mb-3">
+
+<!-- esta seccion div contiene la primera parte que da resumen de activos, pasivos y total.
+    Tiene un display:flex dado por la clase contenedor-totales-->
+
+    <div>
+        <div>
+            <strong>Activos</strong>
+        </div>
+        <div class="activo">
+        <!-- Aqui, el Linq busca donde los Balances sean mayores a 0, entonces suma todos esos balances
+            y arroja el dato para que FormatearBalance lo coloque sin negativo y en formato moneda-->
+            @FormatearBalance(Model.Where(x => x.Balance > 0).Sum(x => x.Balance))
+        </div>
+
+    </div>
+
+    <div>
+        <div>
+            <strong>Pasivos</strong>
+        </div>
+        <div class="pasivo">
+
+        <!-- Aqui, el Linq busca donde los Balances sean menores a 0, entonces suma todos esos balances
+            y arroja el dato para que FormatearBalance lo coloque sin negativo y en formato moneda-->
+
+            @FormatearBalance(Model.Where(x => x.Balance < 0).Sum(x => x.Balance))
+        </div>
+
+    </div>
+
+    <div>
+        <div>
+            <strong>Total</strong>
+        </div>
+        <div>
+
+        <!-- Aqui, el Linq suma todos los balances y arroja el dato para que 
+        FormatearBalance lo coloque sin negativo y en formato moneda-->
+
+            @FormatearBalance(Model.Sum(x => x.Balance))
+        </div>
+    </div>
+
+
+</div>
+
+<div class="accordion-body acordeon-cuentas">
+
+<!-- A partir de este div inicia el acordeón. En principio se va a formatear el encabezado
+    de cada acordeón, y luego va a formatear el cuerpo. Tiene que haber un foreach para recorrer
+    cada TipoCuenta, y a partir de cada tipoCUenta va a tener un foreach para recorrer cada cuenta
+    que tiene asignada. Esto hace un foreach anidado en otro foreach.-->
+
+    @foreach(var tipoCuenta in Model)
+    {
+        <div class="accordion acordeon-item">
+        <!-- Aqui arranca cada item del acordeón-->
+
+            <h2 class="accordion-header" id="cabeceraUno">
+            <!-- Aqui arranca el encabezado del header -->
+
+            <!-- En este snippet de C# lo que se va a hacer es:
+                    1. A cada nombre de tipoCuenta se le van a quitar los espacios. Esto va a permitir usarlos
+                        como un id
+                    2. Luego cada tipoCuenta se va a convertir en una propiedad id a la que le agregan el #. Esto
+                        se va a guardar en la variable dataBsTarget
+                    3. Luego, según si el balance del tipoCuenta es positivo, va a tomar la clase activo, de otro
+                        modo va a tomar la clase pasivo. Esto se va a guardar en la variable claseTipoCuenta-->
+                @{
+                    var id = tipoCuenta.TipoCuenta.Replace(" ", "");
+                    var dataBSTarget = '#' + id;
+                    var claseTipoCuenta = ObtenerClaseBalance(tipoCuenta.Balance);
+
+                }
+
+                <button class ="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="@dataBSTarget">
+
+                <!-- el encabezado de cada sección del acordeón es técnicamente un botón, así que se usa una etiqueta de botón.
+                        Esto se hace a través de la clase. la propiedad data-bs-target se usa para determinar a qué etiqueta con
+                        el id que se le pase se le va a aplicar el collapse del acordeón-->
+
+                    <span class="me-3">
+                        <!-- Aqui va el cuerpo de lo que va a contener el botón del acordeón. En este caso contiene el nombre del
+                             tipo de cuenta y además el balance total. Hay que recordar que los span son inline, asi que cada span
+                             va a aparecer a un lado del otro.-->
+
+                        <span><strong>@tipoCuenta.TipoCuenta</strong></span>
+                        <span class ="@claseTipoCuenta">@FormatearBalance(tipoCuenta.Balance)</span>
+                    </span>
+
+                </button>
+            </h2>
+
+            <!-- Aquí arranca el cuerpo del acordeón, marcado con las clases del cuerpo del acordeón y además con el
+            el id al que va a apuntar el botón del acordeón.-->
+
+            <div id="@id" class ="accordion-collapse collapse show">
+                <div>
+                    <ul class ="list-group">
+
+                        <!-- Aqui se listan en un foreach anidado cada una de las cuentas en la lista tipoCuenta.Cuentas
+                            Lo primero que hace es determinar si el balance va a ser rojo o azul (asignándole la clase)
+                            y luego colocar en dos span el nombre de la cuenta, asi como el balance.
+                            
+                            Vale la pena revisar el custom.css que rige los estilos de esta página, que dan cuenta del formateo
+                            que hace que ambas cosas aparezcan una al lado de la otra. -->
+
+                        @foreach(var cuenta in tipoCuenta.Cuentas)
+                        {
+                            var claseCuenta = ObtenerClaseBalance(cuenta.Balance);
+                            <li class="list-group-item">
+                                <span>
+
+                                    <!-- Aqui el link redirige a la acción Detalle, donde muestra todas las transacciones para
+                                     * el id que tiene esta linea (asp-route-id). Cuando solicita la accion Detalle, envía
+                                     * el id con valor, pero el parámetro de mes y año los envía en 0. Cuando eso sucede,
+                                     * la ACCION Detalle hace que el mes y el año sean el actual de sistema.
+                                     -->
+                                    <strong><a asp-action="Detalle" asp-route-id =@cuenta.Id>@cuenta.Nombre</a></strong>
+                                    <a class ="btn-primary btn" asp-action="Editar" asp-route-id= "@cuenta.Id">
+                                        <i class = "bi-pencil-fill" ></i>
+                                    </a>
+                                    <a class ="btn-danger btn" asp-action="Borrar" asp-route-id="@cuenta.Id">
+                                        <i class = "bi-trash-fill"></i>
+                                    </a>
+
+                                </span>
+                                <span class ="@claseCuenta">@FormatearBalance(cuenta.Balance)</span>
+
+
+                            </li>
+                        }
+
+
+                    </ul>
+
+                    
+                
+                </div>
+
+
+
+            </div>
+
+
+        </div>
+    }
+
+
+</div>
