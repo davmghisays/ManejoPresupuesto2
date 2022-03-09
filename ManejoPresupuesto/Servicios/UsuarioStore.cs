@@ -88,7 +88,7 @@ namespace ManejoPresupuesto.Servicios
         //6
         public Task<string> GetUserNameAsync(Usuario user, CancellationToken cancellationToken)
         {
-            return Task.FromResult(user.Id.ToString());
+            return Task.FromResult(user.Email);
             //throw new NotImplementedException();
         }
 
